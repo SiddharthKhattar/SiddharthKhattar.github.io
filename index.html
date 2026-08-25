@@ -858,7 +858,7 @@ body::after {
             <div class="lc-diff"><div class="lc-diff-count hard" id="lc-hard">145</div><div class="lc-diff-label">Hard</div></div>
           </div>
 <div style="display:flex;flex-direction:column;gap:0;">
-            <div class="lc-stat-row"><span>Total solved</span><span class="lc-stat-val g" id="lc-total">781 problems</span></div>
+            <div class="lc-stat-row"><span>Total solved</span><span class="lc-stat-val g" id="lc-total">900 problems</span></div>
             <div class="lc-stat-row"><span>Contest rating</span><span class="lc-stat-val p" id="lc-rating">1,891</span></div>
             <div class="lc-stat-row"><span>Global rank</span><span class="lc-stat-val" id="lc-rank">39,944 / 874,213</span></div>
             <div class="lc-stat-row"><span>Top percentile</span><span class="lc-stat-val g" id="lc-percentile">4.71%</span></div>
@@ -1100,10 +1100,10 @@ async function fetchLeetCodeTelemetry() {
   const username = 'skhattar111';
   
   try {
-    // Fetch profile, contest, language, and badge data in parallel
-    const [profileRes, contestRes, langRes, badgeRes] = await Promise.all([
-      fetch(`https://alfa-leetcode-api.onrender.com/${username}`),
-      fetch(`https://alfa-leetcode-api.onrender.com/userContestRankingInfo/${username}`),
+    // Fetch detailed specific endpoints in parallel
+    const [solvedRes, contestRes, langRes, badgeRes] = await Promise.all([
+      fetch(`https://alfa-leetcode-api.onrender.com/${username}/solved`),
+      fetch(`https://alfa-leetcode-api.onrender.com/${username}/contest`),
       fetch(`https://alfa-leetcode-api.onrender.com/${username}/language`),
       fetch(`https://alfa-leetcode-api.onrender.com/${username}/badges`)
     ]);
@@ -1111,40 +1111,39 @@ async function fetchLeetCodeTelemetry() {
     let topPercent = "4.12";
     let badgeCount = 28;
 
-    // 1. Profile Data (Solved Counts)
-    if (profileRes.ok) {
-      const profile = await profileRes.json();
+    // 1. Solved Counts
+    if (solvedRes.ok) {
+      const solved = await solvedRes.json();
       
       const elEasy = document.getElementById('lc-easy');
       const elMed = document.getElementById('lc-med');
       const elHard = document.getElementById('lc-hard');
       const elTotal = document.getElementById('lc-total');
 
-      if (elEasy && profile.easySolved !== undefined) elEasy.textContent = profile.easySolved;
-      if (elMed && profile.mediumSolved !== undefined) elMed.textContent = profile.mediumSolved;
-      if (elHard && profile.hardSolved !== undefined) elHard.textContent = profile.hardSolved;
-      if (elTotal && profile.totalSolved !== undefined) elTotal.textContent = `${profile.totalSolved} problems`;
+      if (elEasy && solved.easySolved !== undefined) elEasy.textContent = solved.easySolved;
+      if (elMed && solved.mediumSolved !== undefined) elMed.textContent = solved.mediumSolved;
+      if (elHard && solved.hardSolved !== undefined) elHard.textContent = solved.hardSolved;
+      if (elTotal && solved.solvedProblem !== undefined) elTotal.textContent = `${solved.solvedProblem} problems`;
     }
 
-    // 2. Contest Data (Rating, Rank, Percentile, Attended)
+    // 2. Contest Data
     if (contestRes.ok) {
       const contest = await contestRes.json();
-      if (contest.userContestRanking) {
-        const rating = Math.round(contest.userContestRanking.rating);
-        const globalRank = contest.userContestRanking.globalRanking;
-        const attended = contest.userContestRanking.attendedContestsCount;
-        topPercent = contest.userContestRanking.topPercentage;
-        
-        const elRating = document.getElementById('lc-rating');
-        const elPercentile = document.getElementById('lc-percentile');
-        const elRank = document.getElementById('lc-rank');
-        const elContests = document.getElementById('lc-contests');
+      
+      const rating = Math.round(contest.contestRating || 1919);
+      const globalRank = contest.contestGlobalRanking || 35151;
+      const attended = contest.contestAttend || 19;
+      topPercent = contest.contestTopPercentage || "4.12";
+      
+      const elRating = document.getElementById('lc-rating');
+      const elPercentile = document.getElementById('lc-percentile');
+      const elRank = document.getElementById('lc-rank');
+      const elContests = document.getElementById('lc-contests');
 
-        if (elRating) elRating.textContent = rating.toLocaleString();
-        if (elPercentile) elPercentile.textContent = `${topPercent}%`;
-        if (elRank) elRank.textContent = `${globalRank.toLocaleString()} / 879,441`;
-        if (elContests) elContests.textContent = attended;
-      }
+      if (elRating) elRating.textContent = rating.toLocaleString();
+      if (elPercentile) elPercentile.textContent = `${topPercent}%`;
+      if (elRank && globalRank) elRank.textContent = `${globalRank.toLocaleString()} / 879,441`;
+      if (elContests) elContests.textContent = attended;
     }
     
     // 3. Language Data
@@ -1180,6 +1179,8 @@ async function fetchLeetCodeTelemetry() {
     console.warn('LeetCode API fetch failed. Keeping fallback values.', err);
   }
 }
+
+fetchLeetCodeTelemetry();
 
 fetchLeetCodeTelemetry();
 
